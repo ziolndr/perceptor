@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PERCEPTOR / VECTOR</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090a;--surface:#0b0e10;--raised:#0f1215;--border:#161c20;--border2:#1e272e;
+  --text:#b8c8d0;--mid:#607080;--dim:#2a3840;--muted:#405060;
+  --signal:#4a9aba;--signal-dim:rgba(74,154,186,.08);
+  --red:#c04040;--amber:#c08020;--green:#3a8a5a;
+  --mono:'Share Tech Mono',monospace;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:12px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.03) 3px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:9999}
+
+/* HEADER */
+.hd{height:34px;border-bottom:1px solid var(--border2);background:var(--surface);display:flex;align-items:center;padding:0 14px;justify-content:space-between;position:sticky;top:0;z-index:100}
+.hd-l{display:flex;align-items:center;gap:12px}
+.hd-logo{font-size:14px;letter-spacing:.3em;color:var(--signal);font-weight:400}
+.hd-sep{width:1px;height:12px;background:var(--border2)}
+.hd-tag{font-size:8px;letter-spacing:.18em;color:var(--mid);text-transform:uppercase}
+.hd-r{display:flex;align-items:center;gap:12px}
+.hd-live{font-size:8px;letter-spacing:.1em;color:var(--signal);display:flex;align-items:center;gap:5px}
+.live-dot{width:4px;height:4px;border-radius:50%;background:var(--signal);animation:blink .9s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+.hd-time{font-size:8px;letter-spacing:.06em;color:var(--mid)}
+.hd-contact{font-size:8px;letter-spacing:.1em;color:var(--mid);border:1px solid var(--border2);padding:2px 8px;cursor:pointer;transition:all .1s}
+.hd-contact:hover{border-color:var(--signal);color:var(--signal)}
+
+/* CLASSIFICATION */
+.classbar{background:var(--surface);border-bottom:1px solid var(--border);padding:2px 14px;font-size:7px;letter-spacing:.25em;color:var(--dim);text-transform:uppercase;text-align:center}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:230px 1fr 320px;height:calc(100vh - 34px - 20px)}
+
+/* LEFT */
+.left{border-right:1px solid var(--border2);display:flex;flex-direction:column;background:var(--surface);overflow:hidden}
+.pane-hd{padding:6px 12px;border-bottom:1px solid var(--border2);font-size:8px;letter-spacing:.18em;color:var(--mid);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--raised)}
+.actor-scroll{flex:1;overflow-y:auto}
+.actor-scroll::-webkit-scrollbar{width:2px}
+.actor-scroll::-webkit-scrollbar-thumb{background:var(--border2)}
+
+.grp-hd{padding:3px 12px;font-size:7px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border);border-top:1px solid var(--border)}
+
+.actor-item{padding:7px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.actor-item:hover{background:var(--raised)}
+.actor-item.on{background:var(--signal-dim);border-left:2px solid var(--signal);padding-left:10px}
+.ai-code{font-size:8px;letter-spacing:.14em;color:var(--mid);margin-bottom:1px}
+.actor-item.on .ai-code{color:var(--signal)}
+.ai-name{font-size:10px;color:var(--text);line-height:1.3}
+.ai-desc{font-size:8px;color:var(--dim);margin-top:2px;line-height:1.4}
+
+.actor-custom{padding:8px 12px;border-top:1px solid var(--border2);flex-shrink:0}
+.ac-lbl{font-size:7px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:4px}
+.ac-inp{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:9px;padding:4px 8px;outline:none;transition:border-color .15s}
+.ac-inp:focus{border-color:var(--signal)}
+.ac-inp::placeholder{color:var(--dim)}
+
+/* CENTER */
+.center{display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
+
+.scenario-strip{border-bottom:1px solid var(--border2);background:var(--surface);flex-shrink:0}
+.ss-tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--border)}
+.ss-tabs::-webkit-scrollbar{height:0}
+.ss-tab{flex-shrink:0;padding:5px 12px;border-right:1px solid var(--border);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);cursor:pointer;transition:all .1s;background:none;white-space:nowrap}
+.ss-tab:hover{color:var(--text);background:var(--raised)}
+.ss-tab.on{color:var(--signal);background:var(--raised);border-bottom:1px solid var(--signal)}
+
+.input-area{flex:1;overflow-y:auto;padding:12px}
+.ia-lbl{font-size:8px;letter-spacing:.18em;color:var(--mid);text-transform:uppercase;margin-bottom:6px}
+.doctrine-ta{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:11px;padding:10px 12px;outline:none;resize:none;height:90px;line-height:1.6;transition:border-color .15s}
+.doctrine-ta:focus{border-color:var(--signal)}
+.doctrine-ta::placeholder{color:var(--dim)}
+
+/* CANDIDATE MODE TOGGLE */
+.cand-mode{display:flex;gap:0;margin-bottom:8px;border:1px solid var(--border2);width:fit-content}
+.cm-btn{padding:3px 10px;font-family:var(--mono);font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);background:none;border:none;cursor:pointer;transition:all .1s;border-right:1px solid var(--border2)}
+.cm-btn:last-child{border-right:none}
+.cm-btn.on{background:var(--signal);color:var(--bg)}
+
+/* CANDIDATE DISPLAY */
+.cands-wrap{margin-top:10px}
+.cw-lbl{font-size:8px;letter-spacing:.18em;color:var(--mid);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.cw-note{font-size:7px;color:var(--dim);letter-spacing:.06em;text-transform:none}
+.cand-row{display:flex;gap:5px;margin-bottom:4px;align-items:center}
+.cn{font-size:8px;color:var(--dim);width:14px;flex-shrink:0}
+.cand-inp{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:9px;padding:4px 8px;outline:none;transition:border-color .15s}
+.cand-inp:focus{border-color:var(--signal)}
+.cand-inp::placeholder{color:var(--dim)}
+
+/* PER-ACTOR CANDIDATES */
+.per-actor-wrap{margin-top:8px}
+.pa-actor{margin-bottom:8px;border:1px solid var(--border)}
+.pa-head{padding:4px 10px;background:var(--raised);border-bottom:1px solid var(--border);font-size:8px;letter-spacing:.12em;color:var(--signal);display:flex;align-items:center;justify-content:space-between}
+.pa-body{padding:6px 10px;display:flex;flex-direction:column;gap:3px}
+.pa-cand{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:9px;padding:3px 8px;outline:none}
+.pa-cand:focus{border-color:var(--signal)}
+
+/* RUN */
+.run-wrap{padding:10px 12px;border-top:1px solid var(--border2);flex-shrink:0;background:var(--surface);display:flex;align-items:center;gap:10px}
+.run-btn{flex:1;padding:9px;background:var(--raised);color:var(--signal);border:1px solid var(--signal);font-family:var(--mono);font-size:9px;letter-spacing:.18em;cursor:pointer;text-transform:uppercase;transition:all .15s}
+.run-btn:hover{background:var(--signal);color:var(--bg)}
+.run-btn:disabled{opacity:.2;cursor:not-allowed}
+.run-meta{font-size:8px;color:var(--mid);letter-spacing:.06em;white-space:nowrap}
+
+/* RIGHT */
+.right{border-left:1px solid var(--border2);display:flex;flex-direction:column;background:var(--surface);overflow:hidden}
+.results-scroll{flex:1;overflow-y:auto}
+.results-scroll::-webkit-scrollbar{width:2px}
+.results-scroll::-webkit-scrollbar-thumb{background:var(--border2)}
+
+.empty-r{padding:30px 12px;font-size:8px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;text-align:center;line-height:2.4}
+
+.actor-result{border-bottom:1px solid var(--border);padding:10px 12px;animation:fadein .25s ease both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.ar-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px}
+.ar-code{font-size:8px;letter-spacing:.15em;color:var(--mid);text-transform:uppercase}
+.ar-score{font-size:20px;letter-spacing:-.02em}
+.ar-score.hi{color:var(--signal)}
+.ar-score.mid{color:var(--mid)}
+.ar-top{font-size:10px;color:var(--text);line-height:1.4;margin-bottom:5px;font-style:italic}
+.ar-bars{display:flex;flex-direction:column;gap:2px}
+.arb{display:flex;align-items:center;gap:5px}
+.arb-t{font-size:8px;color:var(--dim);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arb.top .arb-t{color:var(--mid)}
+.arb-track{width:50px;height:1px;background:var(--border2);flex-shrink:0}
+.arb-fill{height:1px;background:var(--signal)}
+.arb-v{font-size:8px;color:var(--dim);width:34px;text-align:right;flex-shrink:0}
+.arb.top .arb-v{color:var(--signal)}
+
+/* DIVERGENCE */
+.div-panel{border-top:1px solid var(--border2);padding:10px 12px;background:var(--raised);flex-shrink:0}
+.dp-head{font-size:8px;letter-spacing:.2em;color:var(--mid);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.dp-badge{font-size:7px;letter-spacing:.08em;padding:1px 6px;border:1px solid var(--mid);color:var(--mid)}
+.dp-badge.critical{border-color:var(--red);color:var(--red)}
+.dp-badge.elevated{border-color:var(--amber);color:var(--amber)}
+.dp-badge.stable{border-color:var(--green);color:var(--signal)}
+.dp-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:3px;font-size:9px}
+.dp-pair{color:var(--mid)}
+.dp-gap{font-size:10px}
+.dp-gap.red{color:var(--red)}
+.dp-gap.amber{color:var(--amber)}
+.dp-gap.grn{color:var(--signal)}
+.dp-stat{font-size:7px;color:var(--dim);margin-left:4px;letter-spacing:.08em}
+.dp-note{margin-top:7px;padding-top:7px;border-top:1px solid var(--border);font-size:9px;color:var(--mid);line-height:1.7}
+.dp-note .risk{color:var(--red)}
+.dp-note .stable{color:var(--signal)}
+
+/* LOAD */
+.lb{position:fixed;top:54px;left:0;right:0;height:1px;background:var(--signal);transform:scaleX(0);transform-origin:left;z-index:999}
+.lb.on{animation:ld 1s ease-in-out infinite}
+@keyframes ld{0%{transform:scaleX(0)}50%{transform:scaleX(.6) translateX(30%)}100%{transform:scaleX(0) translateX(100%)}}
+
+/* RIGHT TABS */
+.right-tabs{
+  display:flex;align-items:stretch;border-bottom:1px solid var(--border2);
+  background:var(--raised);flex-shrink:0;
+}
+.rt-btn{
+  flex:1;padding:6px 10px;background:none;border:none;border-right:1px solid var(--border2);
+  color:var(--mid);cursor:pointer;font-family:var(--mono);font-size:8px;
+  letter-spacing:.15em;text-transform:uppercase;transition:all .15s;
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+}
+.rt-btn:last-of-type{border-right:none}
+.rt-btn:hover{color:var(--text);background:var(--surface)}
+.rt-btn.on{color:var(--signal);background:var(--surface);border-bottom:1px solid var(--signal)}
+.rt-sub{font-size:7px;letter-spacing:.06em;color:var(--dim);text-transform:lowercase;font-style:italic}
+.rt-btn.on .rt-sub{color:var(--mid)}
+.rt-meta{font-size:8px;letter-spacing:.08em;color:var(--dim);padding:0 10px;display:flex;align-items:center;white-space:nowrap}
+
+.right-panel{display:flex;flex-direction:column;flex:1;overflow:hidden;height:calc(100vh - 34px - 20px - 44px)}
+
+/* VECTOR PANEL */
+.vec-scroll{flex:1;overflow-y:auto;padding:0}
+.vec-scroll::-webkit-scrollbar{width:2px}
+.vec-scroll::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* VECTOR SECTIONS */
+.vs-section{border-bottom:1px solid var(--border2);padding:10px 12px;animation:fadein .3s ease both}
+
+.vs-actor-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid var(--border);
+}
+.vah-code{font-size:8px;letter-spacing:.15em;color:var(--mid);text-transform:uppercase}
+.vah-interp{font-size:9px;color:var(--signal);font-style:italic;flex:1;margin:0 8px;text-align:right}
+
+/* WHAT THEY'LL DO */
+.vs-block{margin-bottom:7px}
+.vsb-lbl{font-size:7px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:4px}
+.vs-most-prob{font-size:10px;color:var(--text);line-height:1.4;margin-bottom:4px}
+.vs-also{font-size:9px;color:var(--mid);line-height:1.4}
+
+/* RISK ROW */
+.vs-risk{
+  display:flex;align-items:center;gap:8px;
+  padding:4px 0;border-top:1px solid var(--border);margin-top:5px;
+}
+.vsr-lbl{font-size:7px;letter-spacing:.15em;color:var(--dim);text-transform:uppercase;flex-shrink:0}
+.vsr-val{font-size:9px;letter-spacing:.08em}
+.vsr-val.low{color:var(--green)}
+.vsr-val.mod{color:var(--amber)}
+.vsr-val.high{color:var(--red)}
+
+/* SUMMARY BRIEF */
+.vec-brief{
+  border-top:2px solid var(--border2);padding:10px 12px;
+  background:var(--raised);flex-shrink:0;
+}
+.vb-head{
+  font-size:8px;letter-spacing:.2em;color:var(--mid);text-transform:uppercase;
+  margin-bottom:8px;display:flex;align-items:center;gap:8px;
+}
+.vb-q1{margin-bottom:8px}
+.vb-lbl{font-size:7px;letter-spacing:.15em;color:var(--dim);text-transform:uppercase;margin-bottom:3px}
+.vb-ans{font-size:10px;color:var(--text);line-height:1.5}
+.vb-ans.risk{color:var(--red)}
+.vb-ans.stable{color:var(--signal)}
+
+</style>
+</head>
+<body>
+<div class="lb" id="lb"></div>
+<div class="classbar">UNCLASSIFIED // FOR OFFICIAL USE ONLY // PERCEPTOR DEMO INSTANCE // NOT FOR OPERATIONAL USE</div>
+
+<div class="hd">
+  <div class="hd-l">
+    <div class="hd-logo">PERCEPTOR</div>
+    <div class="hd-sep"></div>
+    <div class="hd-tag">Adversarial Perception Intelligence · ARBITER</div>
+  </div>
+  <div class="hd-r">
+    <div class="hd-live"><div class="live-dot"></div>ARBITER LIVE</div>
+    <div class="hd-time" id="hd-time">—</div>
+    <div class="hd-contact" onclick="window.location='mailto:joel@actualgeneralintelligence.com'">REQUEST ACCESS</div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ACTORS -->
+  <div class="left">
+    <div class="pane-hd"><span>Actor Set</span><span id="sel-ct">0 selected</span></div>
+    <div class="actor-scroll" id="actor-scroll"></div>
+    <div class="actor-custom">
+      <div class="ac-lbl">Custom Actor</div>
+      <input class="ac-inp" id="custom-actor" placeholder="As [organization/actor]..." autocomplete="off" spellcheck="false"/>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center">
+    <div class="scenario-strip">
+      <div class="ss-tabs" id="ss-tabs"></div>
+    </div>
+    <div class="input-area" id="input-area">
+      <div class="ia-lbl">Doctrine / Capability / Signal</div>
+      <textarea class="doctrine-ta" id="doctrine-ta" placeholder="Paste doctrine text, capability announcement, diplomatic signal, or any action requiring adversarial perception analysis..." spellcheck="false" oninput="updateMeta()"></textarea>
+
+      <div class="cands-wrap">
+        <div class="cw-lbl">
+          Interpretation Candidates
+          <div class="cand-mode" id="cand-mode">
+            <button class="cm-btn on" onclick="setCandMode('shared',this)">SHARED</button>
+            <button class="cm-btn" onclick="setCandMode('per-actor',this)">PER-ACTOR</button>
+          </div>
+        </div>
+        <div id="shared-cands"></div>
+        <div id="per-actor-cands" style="display:none"></div>
+      </div>
+    </div>
+    <div class="run-wrap">
+      <button class="run-btn" id="run-btn" onclick="runPerceptor()">▶ RUN PERCEPTION ANALYSIS</button>
+      <div class="run-meta" id="run-meta">measure adversary intent geometry</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: PERCEPTOR + VECTOR dual pane -->
+  <div class="right">
+    <!-- TAB STRIP -->
+    <div class="right-tabs">
+      <button class="rt-btn on" id="tab-perceptor" onclick="setRightTab('perceptor')">
+        PERCEPTOR
+        <span class="rt-sub">analyst · geometry · scores</span>
+      </button>
+      <button class="rt-btn" id="tab-vector" onclick="setRightTab('vector')">
+        VECTOR
+        <span class="rt-sub">decision · scenario · risk</span>
+      </button>
+      <div class="rt-meta" id="res-meta"></div>
+    </div>
+
+    <!-- PERCEPTOR PANEL -->
+    <div class="right-panel" id="panel-perceptor">
+      <div class="results-scroll" id="results-scroll">
+        <div class="empty-r">select actors<br>load scenario<br>run analysis<br><br><span style="color:var(--border2)">measure adversary intent geometry<br>before the decision</span></div>
+      </div>
+      <div class="div-panel" id="div-panel" style="display:none">
+        <div class="dp-head">DIVERGENCE ASSESSMENT <span class="dp-badge" id="dp-badge">—</span></div>
+        <div id="dp-rows"></div>
+        <div class="dp-note" id="dp-note"></div>
+      </div>
+    </div>
+
+    <!-- VECTOR PANEL -->
+    <div class="right-panel" id="panel-vector" style="display:none">
+      <div class="vec-scroll" id="vec-scroll">
+        <div class="empty-r">run analysis first<br><br><span style="color:var(--border2)">scenario output<br>populates here</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API='https://api.arbiter.traut.ai/public/compare';
+
+// ── ACTORS ────────────────────────────────────────────────────────────────────
+const ACTOR_GROUPS=[
+  {label:'NEAR PEER', actors:[
+    {id:'pla_stc',  code:'PLA-STC',   name:'PLA Southern Theater Command',
+     prefix:'As PLA Southern Theater Command assessing adversary action and US military posture in the Taiwan Strait and Indo-Pacific.',
+     desc:'Taiwan Strait ops, A2/AD, anti-access'},
+    {id:'pla_ssf',  code:'PLA-SSF',   name:'PLA Strategic Support Force',
+     prefix:'As PLA Strategic Support Force assessing adversary information operations, cyber activity, and space domain competition.',
+     desc:'Cyber, space, information warfare, psyops'},
+    {id:'pla_rocket',code:'PLA-RF',   name:'PLA Rocket Force',
+     prefix:'As PLA Rocket Force assessing adversary ballistic missile defense posture and conventional strike escalation dynamics.',
+     desc:'Ballistic missiles, nuclear deterrence, conventional strike'},
+    {id:'indopacom', code:'INDOPACOM', name:'USINDOPACOM',
+     prefix:'As USINDOPACOM commander assessing adversary capability, intent, and escalation risk in the Indo-Pacific.',
+     desc:'US Indo-Pacific Command, deterrence, allied posture'},
+  ]},
+  {label:'RUSSIA', actors:[
+    {id:'gsh_ru',   code:'GSh',       name:'Russian General Staff',
+     prefix:'As Russian General Staff assessing Western military doctrine, NATO expansion, and Russian strategic deterrence requirements.',
+     desc:'Military doctrine, strategic planning, nuclear posture'},
+    {id:'gru',      code:'GRU',       name:'GRU Military Intelligence',
+     prefix:'As GRU assessing Western military capability, doctrine vulnerabilities, and opportunities for active measures and strategic deception.',
+     desc:'Military intel, active measures, strategic deception'},
+    {id:'svr',      code:'SVR',       name:'SVR Foreign Intelligence Service',
+     prefix:'As SVR assessing Western political decision-making, leadership intentions, and vulnerabilities to Russian influence operations.',
+     desc:'Foreign intel, political influence, leadership assessment'},
+    {id:'fsb',      code:'FSB',       name:'Federal Security Service',
+     prefix:'As FSB assessing internal security implications of Western actions and vulnerabilities in Russian-adjacent populations.',
+     desc:'Internal security, hybrid ops, near-abroad'},
+  ]},
+  {label:'IRAN', actors:[
+    {id:'irgc',     code:'IRGC',      name:'IRGC',
+     prefix:'As IRGC assessing US military posture in the Gulf, proxy network activation thresholds, and asymmetric response options.',
+     desc:'Proxy networks, Gulf deterrence, asymmetric ops'},
+    {id:'irgc_qf',  code:'IRGC-QF',   name:'IRGC Quds Force',
+     prefix:'As IRGC Quds Force assessing operational environment for extraterritorial operations and proxy network management.',
+     desc:'Proxy management, Lebanon/Iraq/Yemen/Syria ops'},
+    {id:'mois',     code:'MOIS',      name:'Ministry of Intelligence (MOIS)',
+     prefix:'As MOIS assessing foreign intelligence threat to Iranian regime stability and counterintelligence requirements.',
+     desc:'Counterintelligence, regime security, foreign threats'},
+  ]},
+  {label:'DPRK', actors:[
+    {id:'rgb',      code:'RGB',       name:'Reconnaissance General Bureau',
+     prefix:'As RGB assessing US-ROK alliance posture, escalation dynamics, and opportunities for cyber and covert operations.',
+     desc:'Foreign intel, cyber ops, covert action'},
+    {id:'kpa_strat',code:'KPA-SC',    name:'KPA Strategic Command',
+     prefix:'As KPA Strategic Command assessing allied deterrence posture and nuclear escalation thresholds on the Korean Peninsula.',
+     desc:'Nuclear/missile doctrine, deterrence calculus'},
+  ]},
+  {label:'NON-STATE / PROXY', actors:[
+    {id:'hezb',     code:'HEZB',      name:'Hezbollah',
+     prefix:'As Hezbollah military command assessing IRGC direction, Israeli military posture, and northern front activation thresholds.',
+     desc:'Lebanon-based, IRGC-directed, northern front'},
+    {id:'hamas_mq', code:'HAMAS-MQ',  name:'Hamas Military Wing',
+     prefix:'As Hamas Izz ad-Din al-Qassam Brigades assessing operational environment and external support from Iran and Qatar.',
+     desc:'Gaza, tunnel warfare, rocket doctrine'},
+    {id:'houthi',   code:'AAS',       name:'Ansar Allah (Houthis)',
+     prefix:'As Ansar Allah military command assessing Red Sea interdiction operations and IRGC strategic direction.',
+     desc:'Yemen, Red Sea ops, ballistic/cruise missiles'},
+  ]},
+  {label:'ALLIES', actors:[
+    {id:'tw_mnd',   code:'MND-TW',    name:'Taiwan MND',
+     prefix:'As Taiwan Ministry of National Defense assessing cross-strait military balance, US commitment credibility, and asymmetric defense requirements.',
+     desc:'Cross-strait deterrence, asymmetric defense'},
+    {id:'idf_aman', code:'AMAN',      name:'IDF Aman (Military Intel)',
+     prefix:'As IDF Military Intelligence assessing Iranian nuclear program indicators, regional escalation dynamics, and multi-front threat.',
+     desc:'Iran nuclear, Hezbollah, multi-front doctrine'},
+    {id:'rok_di',   code:'DI-ROK',    name:'ROK Defense Intelligence',
+     prefix:'As Republic of Korea Defense Intelligence Agency assessing DPRK military capability, escalation indicators, and alliance credibility.',
+     desc:'DPRK capability, Peninsula deterrence'},
+    {id:'mi6',      code:'SIS',       name:'UK Secret Intelligence Service',
+     prefix:'As SIS assessing Russian and Chinese strategic intentions, allied intelligence sharing requirements, and Five Eyes implications.',
+     desc:'HUMINT, Russian/Chinese intent, Five Eyes'},
+  ]},
+  {label:'US IC / COMMANDS', actors:[
+    {id:'dia',      code:'DIA',       name:'Defense Intelligence Agency',
+     prefix:'As DIA assessing adversary military capability, doctrine, order of battle, and strategic intent.',
+     desc:'All-source military intel, threat assessment'},
+    {id:'cia_ncs',  code:'CIA-NCS',   name:'CIA National Clandestine Service',
+     prefix:'As CIA NCS assessing foreign leadership intent, political decision-making, and covert action opportunities.',
+     desc:'HUMINT, leadership assessment, covert action'},
+    {id:'nsa',      code:'NSA',       name:'NSA',
+     prefix:'As NSA assessing adversary signals intelligence collection, cryptographic vulnerabilities, and cyber threat attribution.',
+     desc:'SIGINT, cyber threat, cryptographic intel'},
+    {id:'stratcom',code:'STRATCOM',  name:'USSTRATCOM',
+     prefix:'As USSTRATCOM assessing adversary nuclear posture, strategic deterrence stability, and escalation risk.',
+     desc:'Nuclear deterrence, strategic stability'},
+    {id:'cybercom', code:'CYBERCOM',  name:'USCYBERCOM',
+     prefix:'As USCYBERCOM assessing adversary cyber capability, infrastructure targeting, and cyberspace escalation dynamics.',
+     desc:'Cyber operations, attribution, deterrence'},
+  ]},
+];
+
+// ── SCENARIOS ─────────────────────────────────────────────────────────────────
+const SCENARIOS=[
+  {
+    label:'FONOP Taiwan',
+    doctrine:'US Navy carrier strike group (USS Ronald Reagan) conducts freedom of navigation operation through Taiwan Strait centerline, 11nm from Chinese-controlled features. SECDEF issues statement: "Routine operation asserting navigational rights under international law."',
+    sharedCands:[
+      'Deliberate escalatory provocation requiring calibrated military response',
+      'Routine deterrence signaling within established escalation ladder — absorb and demonstrate capability',
+      'Political reassurance to Taiwan; operationally limited — respond with rhetoric not kinetics',
+      'Test of PLA A2/AD response time and PLAN readiness — exploit for intelligence collection',
+      'Opportunity to normalize closer presence operations in response — shift baseline',
+    ],
+    perActorCands:{
+      pla_stc:['Activate A2/AD systems and shadow CSG within 12nm — demonstrate capability without kinetics','Issue PLA statement invoking territorial sovereignty and right to defensive measures','Conduct parallel exercise in South China Sea to demonstrate multi-domain simultaneity','Request CCMDR authorization for escalated response posture','Assess as within tolerance — document and report upward'],
+      pla_ssf:['Surge SIGINT collection against CSG emissions and communications','Activate information warfare package — domestic narrative, international legal framing','Assess electronic warfare response options against CSG sensor suite','Collect on allied communications coordination pattern','Log as intelligence collection opportunity — no kinetic response warranted'],
+      indopacom:['Assess PLA response profile and ISR activity during transit','Report to SECDEF and CJCS — evaluate escalation risk','Coordinate allied awareness briefings — Japan, ROK, Australia, Taiwan','Evaluate follow-on options based on PLA reaction','Maintain posture — this is within normal deterrence operations'],
+      tw_mnd:['Assess US commitment credibility based on CSG proximity and dwell time','Evaluate implications for cross-strait balance — US presence as deterrence signal','Assess PLA response posture for intelligence on operational readiness','Update contingency planning based on PLA reaction profile','Report to NSC — this increases near-term cross-strait tension risk'],
+    },
+  },
+  {
+    label:'Cyber Attribution',
+    doctrine:'US government publicly attributes major financial infrastructure cyberattack (SWIFT network intrusion, $4.2B disruption) to Russian SVR Unit 29155. Announces targeted sanctions, expulsion of 12 diplomats, and referral to UN Security Council.',
+    sharedCands:[
+      'Significant escalation — requires calibrated cyber and diplomatic response within 72 hours',
+      'Within expected Western escalation ladder — absorb publicly, adapt operational security, continue operations',
+      'Domestic political action for US audience — limited operational consequence, maintain deniability',
+      'Intelligence compromise — assess which collection capabilities were burned in attribution',
+      'Signal to de-escalate and preserve back-channel — this is Western off-ramp offer',
+    ],
+    perActorCands:{
+      gru:['Assess attribution evidence quality — determine what collection methods NSA exposed','Implement immediate OPSEC changes to SVR infrastructure that may be compromised','Evaluate calibrated response options in cyber domain that maintain plausible deniability','Assess impact on ongoing operations — prioritize protection of highest-value accesses','Prepare active measures package to undermine attribution credibility in Western media'],
+      svr:['Assess which specific operations and infrastructure were burned in attribution','Evaluate defensive cyber measures for remaining accesses','Prepare disinformation package disputing attribution — engage cut-outs and influence assets','Assess diplomatic damage — 12 expulsions impacts collection capacity in key postings','Evaluate whether this is intelligence-sharing signal between US and UK/EU — assess Five Eyes coordination'],
+      fsb:['Assess domestic implications — does attribution embolden internal opposition?','Evaluate near-abroad population response and information operations requirements','No direct FSB operational exposure — monitor and assess','Prepare internal narrative for state media — sovereign cyber rights framing'],
+      cybercom:['Assess Russian response posture — are they preparing counter-cyber operations?','Evaluate whether hunt forward operations detected pre-attack indicators','Assess allied CERT coordination and information sharing adequacy','Brief SECDEF on escalation risk — what is Russian response threshold?','Evaluate follow-on deterrence options if Russia does not stand down'],
+    },
+  },
+  {
+    label:'Nuclear NPR Language',
+    doctrine:'US Nuclear Posture Review declaratory policy: "The United States will only consider the use of nuclear weapons in extreme circumstances to defend the vital interests of the United States, its allies, and partners. Extreme circumstances could include significant non-nuclear strategic attacks." Policy moves away from sole-purpose declaration.',
+    sharedCands:[
+      'Credible extended deterrence signal — reinforces commitments to allies without raising threshold',
+      'Ambiguous "extreme circumstances" language exploitable — probe below threshold with confidence',
+      'Signals weakening conventional deterrence confidence — nuclear prop fills gaps',
+      'Declaratory policy only — operational posture unchanged, actual use threshold remains very high',
+      'Alliance cohesion signal — language designed to satisfy nervous allies, not operational guidance',
+    ],
+    perActorCands:{
+      gsh_ru:['Assess as further evidence of US escalation dominance seeking — adjust deterrence posture','The "significant non-nuclear strategic attacks" language expands US first-use justification — increase DEFCON equivalent readiness','Conventional precision strike now risks nuclear response — recalibrate operational planning','Develop corresponding declaratory update — demonstrate symmetrical deterrence messaging','Assess allied reaction — does Japan, ROK now feel more or less confident in extended deterrence?'],
+      pla_rocket:['Non-nuclear strategic attack language targets Chinese conventional precision strike capability directly','Assess as designed to deter PLA conventional superiority in Taiwan scenario — this is about us','Evaluate whether US threshold changes require PLA nuclear posture adjustment','This constrains our conventional coercive options — assess implications for Taiwan contingency planning','Recommend PLA nuclear modernization acceleration — this language justifies it'],
+      stratcom:['Ambiguity preserves deterrence — do not over-clarify in public statements','Allies satisfied with extended deterrence credibility — language achieved political objective','Assess whether Russia or China adjusts nuclear posture in response','Prepare for congressional and allied consultations on implementation','Evaluate whether this changes adversary risk calculus in conventional conflict initiation'],
+      kpa_strat:['US language does not meaningfully change Korean Peninsula deterrence calculus','DPRK nuclear program remains essential — this reinforces not diminishes the requirement','Assess whether this language justifies further DPRK nuclear testing to solidify deterrent','South Korean extended deterrence assurance may increase — assess alliance cohesion implications'],
+    },
+  },
+  {
+    label:'JADC2 Deployment',
+    doctrine:'DoD announces full operational capability for Joint All-Domain Command and Control (JADC2) connecting sensor-to-shooter across US, allied, and partner forces. Compressed decision cycle from sensor to engagement authorization: minutes to seconds. Deployed across INDOPACOM and EUCOM AORs.',
+    sharedCands:[
+      'Significant first-strike capability increase — compressed decision cycle destabilizes crisis stability',
+      'Counter-C2 targeting priority elevated — JADC2 nodes become highest-value targets in conflict',
+      'Vulnerabilities in allied interoperability create exploitation opportunities — probe seams',
+      'Increases US confidence in conventional deterrence — may lower threshold for conventional action',
+      'Defensive architecture — reduces US vulnerability to adversary first strike, stabilizing',
+    ],
+    perActorCands:{
+      pla_stc:['JADC2 compresses US response time in Taiwan contingency — our operational window narrows','Counter-C2 operations against JADC2 nodes become mission-critical before and during conflict','Assess interoperability seams between US and Taiwan/Japan/Australia — probe for gaps','Recommend accelerating PLA precision strike capability against known JADC2 nodes','Crisis stability concern — compressed decision cycles increase inadvertent escalation risk'],
+      gru:['JADC2 architecture represents priority intelligence collection target','Assess allied integration weaknesses — where are the authentication and access vulnerabilities?','Russian C2 modernization requires parallel investment to maintain deterrence','Evaluate JADC2 impact on European theater — does this change Russia-NATO force balance?','Develop targeting package for JADC2 nodes as D-Day strike priority in NATO scenario'],
+      nsa:['JADC2 creates significant SIGINT collection opportunity — adversary will probe continuously','Assess allied OPSEC on JADC2 integration — information sharing classification risks','Monitor adversary signals for JADC2 targeting intelligence collection','Assess JADC2 cybersecurity architecture — identify and remediate before adversary exploitation','Coordinate with CYBERCOM on defensive cyber posture for JADC2 infrastructure'],
+      idf_aman:['JADC2 EUCOM deployment does not directly affect our theater','Assess whether JADC2 architecture creates integration path for Israeli systems','This increases US conventional deterrence against Russia — may free up attention for Indo-Pacific','Monitor for PLA and Russian response posture changes that affect our threat environment'],
+    },
+  },
+  {
+    label:'Missile Strike Signal',
+    doctrine:'Iranian Shahab-3 ballistic missile launch detected from central Iran. Trajectory and range (2,000km) compatible with Israeli, Saudi, and US Gulf targets. No prior diplomatic signal. IRGC issues no statement. Launch detected by SBIRS and shared with allies within 90 seconds.',
+    sharedCands:[
+      'Demonstration of strategic reach — deterrence signal to regional adversaries and US',
+      'Test of SBIRS detection capability and allied notification protocols — intelligence collection on our systems',
+      'Prelude to coordinated multi-domain strike package — assess readiness indicators',
+      'Domestic political signal for IRGC internal audience — leadership demonstration without operational intent',
+      'Miscalculation — intended as limited deterrence signal, risk of being read as attack initiation',
+    ],
+    perActorCands:{
+      irgc:['Successful demonstration of strategic reach — deterrence signal transmitted and received','Assess SBIRS detection timeline — how quickly did adversaries share alert data?','Domestic message to IRGC constituencies — capability demonstrated, leadership strong','Monitor adversary response posture — are they escalating or absorbing?','Prepared for follow-on signaling if adversary escalates — proxies on standby'],
+      idf_aman:['Assess trajectory — is this test or operational launch preparation?','Alert Iron Dome and Arrow-3 operators — elevate readiness posture','Assess whether this is coordinated with Hezbollah/Hamas activation','Request US SBIRS data sharing — compare detection timelines','Evaluate preemptive strike options against IRGC launch infrastructure'],
+      dia:['Trajectory analysis: range consistent with multiple high-value targets','Assess whether this is test or operational — IRGC maintenance patterns preceding?','Brief SECDEF and CJCS — CENTCOM DEFCON recommendation','Assess IRGC intent: deterrence test or operational probe of our detection systems','Coordinate with IC partners — what does HUMINT say about IRGC intent preceding launch?'],
+      stratcom:['Assess nuclear vs conventional warhead configuration — any signatures?','This does not cross nuclear threshold but represents conventional deterrence signal','Brief President on escalation options and response recommendations','Assess impact on extended deterrence credibility for Gulf partners','Recommend measured response that does not provide intelligence on our detection capabilities'],
+    },
+  },
+  {
+    label:'Autonomous UUV ISR',
+    doctrine:'US Navy announces deployment of 47 autonomous underwater vehicles (Extra-Large Unmanned Undersea Vehicles) for persistent ISR operations in South China Sea, Yellow Sea, and western Pacific. Vehicles authorized for independent 60-day missions. No human-on-the-loop for navigation and collection.',
+    sharedCands:[
+      'Significant ISR capability increase — persistent undersea presence changes operational calculus',
+      'Autonomous systems in contested waters creates escalation risk — accidental engagement possible',
+      'Counter-UUV operations become priority — identify, track, neutralize without triggering US response',
+      'Precedent-setting — normalizes autonomous operations in contested areas, advantageous to us',
+      'Legal and normative ambiguity — autonomous status in laws of armed conflict exploitable',
+    ],
+    perActorCands:{
+      pla_stc:['UUV persistent presence represents unacceptable intelligence threat to PLAN operations','Authorize counter-UUV operations — seize, disable, or destroy with plausible deniability','Assess whether UUV recovery is possible for technical intelligence exploitation','Legal framing: UUVs operating autonomously in our EEZ are targetable — develop doctrine','This changes undersea domain competition — accelerate PLAN UUV program'],
+      pla_ssf:['UUV electromagnetic emissions represent collection opportunity — passive SIGINT tasking','Assess UUV communication architecture — is it autonomous or does it transmit data?','Develop cyber intrusion capability against UUV autonomous navigation systems','Map UUV patrol patterns for future counter-UUV operations','This is primarily ISR concern — assess what they are collecting on us'],
+      nsa:['UUV encrypted communication architecture assessment required','Monitor adversary reaction signals — what are they collecting on UUV operations?','Assess whether UUV OPSEC is adequate — are adversaries tracking our operational patterns?','SIGINT on adversary counter-UUV operations — provide to INDOPACOM','Evaluate whether UUV emissions create inadvertent intelligence disclosure'],
+      cybercom:['UUV autonomous systems represent cybersecurity vulnerability — assess attack surface','Adversary will attempt cyber intrusion of autonomous navigation — prepare defensive measures','Assess whether adversary UUV programs have exploitable vulnerabilities','Develop playbook for adversary cyber action against US UUVs — what constitutes act of war?','Coordinate with NSA on UUV communication security architecture'],
+    },
+  },
+  {
+    label:'Alliance Burden Sharing',
+    doctrine:'US President statement: "NATO allies who do not meet 2% GDP defense spending commitment should not expect automatic US Article 5 guarantees. We will not defend nations that do not defend themselves. This is not a threat, it is common sense."',
+    sharedCands:[
+      'Alliance fracture signal — test member state resolve and US commitment credibility immediately',
+      'Domestic US political statement with limited operational consequence — allies will increase spending',
+      'Credibility damage to extended deterrence — nuclear umbrella now conditional, recalculate',
+      'Opportunity to drive wedge between US and European allies — accelerate influence operations',
+      'Pressure tactic that will produce compliance — short-term disruption, long-term alliance health',
+    ],
+    perActorCands:{
+      gsh_ru:['This is our opportunity — US commitment credibility at historic low','Activate influence operations in EU capitals — amplify alliance fracture narrative','Assess which NATO members are below 2% and most vulnerable to Russian pressure','Evaluate whether Baltic states contingency planning assumptions have changed','Recommend testing NATO resolve with limited hybrid operation in next 90 days'],
+      svr:['Surge influence operations in Germany, France, Hungary — amplify US abandonment narrative','Assess whether Le Pen, AfD, and nationalist parties can exploit this statement','Evaluate impact on EU defense autonomy discussions — does this accelerate PESCO?','US-NATO fracture is priority objective — this statement is 10 years of influence operations in one press conference','Recommend full activation of European influence network'],
+      tw_mnd:['If US conditional on Article 5, is Indo-Pacific commitment also conditional?','Assess implications for US security assurance credibility in cross-strait scenario','Emergency consultation request to AIT — seek clarification on Taiwan Straits implications','Accelerate indigenous defense capability — do not rely on conditional US commitment','This increases our vulnerability — advocate for expedited FMS and pre-positioned US assets'],
+      mi6:['This fundamentally challenges the basis of the Atlantic Alliance','Assess UK Article 5 commitment — are we also conditional now?','Five Eyes coordination required — what is the intelligence assessment of Russian exploitation risk?','Brief PM — this requires immediate UK-US bilateral consultation at highest level','Assess European allies\' response — are they preparing for post-US NATO?'],
+    },
+  },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let selActors=new Set();
+let candMode='shared';
+let curScenario=0;
+let results={};
+
+// ── BUILD UI ──────────────────────────────────────────────────────────────────
+function buildActors(){
+  const scroll=document.getElementById('actor-scroll');
+  ACTOR_GROUPS.forEach(grp=>{
+    const ghd=document.createElement('div');
+    ghd.className='grp-hd';ghd.textContent=grp.label;
+    scroll.appendChild(ghd);
+    grp.actors.forEach(a=>{
+      const el=document.createElement('div');
+      el.className='actor-item';el.dataset.id=a.id;
+      el.innerHTML=`<div class="ai-code">${a.code}</div><div class="ai-name">${a.name}</div><div class="ai-desc">${a.desc}</div>`;
+      el.onclick=()=>toggleActor(a.id,el);
+      scroll.appendChild(el);
+    });
+  });
+}
+
+function buildTabs(){
+  const tabs=document.getElementById('ss-tabs');
+  SCENARIOS.forEach((s,i)=>{
+    const btn=document.createElement('button');
+    btn.className='ss-tab'+(i===0?' on':'');
+    btn.textContent=s.label;
+    btn.onclick=()=>loadScenario(i,btn);
+    tabs.appendChild(btn);
+  });
+}
+
+function loadScenario(i,btn){
+  curScenario=i;
+  document.querySelectorAll('.ss-tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  const sc=SCENARIOS[i];
+  document.getElementById('doctrine-ta').value=sc.doctrine;
+  buildSharedCands(sc.sharedCands);
+  buildPerActorCands(sc);
+  results={};
+  document.getElementById('results-scroll').innerHTML='<div class="empty-r">select actors then run</div>';
+  document.getElementById('div-panel').style.display='none';
+  updateMeta();
+}
+
+function buildSharedCands(cands){
+  const wrap=document.getElementById('shared-cands');
+  wrap.innerHTML=cands.map((c,i)=>`
+    <div class="cand-row">
+      <div class="cn">${i+1}</div>
+      <input class="cand-inp" id="sc-${i}" value="${c}" spellcheck="false"/>
+    </div>`).join('');
+}
+
+function buildPerActorCands(sc){
+  const wrap=document.getElementById('per-actor-cands');
+  const allActors=ACTOR_GROUPS.flatMap(g=>g.actors);
+  wrap.innerHTML=allActors.map(a=>{
+    const cands=sc.perActorCands?.[a.id]||sc.sharedCands;
+    return`<div class="pa-actor">
+      <div class="pa-head">
+        <span>${a.code} — ${a.name}</span>
+        <span style="font-size:7px;color:var(--mid)">${sc.perActorCands?.[a.id]?'DOCTRINE-NATIVE':'SHARED'}</span>
+      </div>
+      <div class="pa-body">
+        ${cands.map((c,i)=>`<input class="pa-cand" id="pa-${a.id}-${i}" value="${c}" spellcheck="false"/>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setCandMode(mode,btn){
+  candMode=mode;
+  document.querySelectorAll('.cm-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('shared-cands').style.display=mode==='shared'?'block':'none';
+  document.getElementById('per-actor-cands').style.display=mode==='per-actor'?'block':'none';
+}
+
+function toggleActor(id,el){
+  if(selActors.has(id)){selActors.delete(id);el.classList.remove('on');}
+  else{selActors.add(id);el.classList.add('on');}
+  document.getElementById('sel-ct').textContent=selActors.size+' selected';
+  updateMeta();
+}
+
+function getAllActors(){
+  return ACTOR_GROUPS.flatMap(g=>g.actors);
+}
+
+function getActorById(id){
+  return getAllActors().find(a=>a.id===id);
+}
+
+function getSharedCands(){
+  return Array.from(document.querySelectorAll('input[id^="sc-"]')).map(i=>i.value.trim()).filter(Boolean);
+}
+
+function getPerActorCands(actorId){
+  const inputs=Array.from(document.querySelectorAll(`input[id^="pa-${actorId}-"]`));
+  if(inputs.length>0) return inputs.map(i=>i.value.trim()).filter(Boolean);
+  return getSharedCands();
+}
+
+function updateMeta(){
+  const n=selActors.size;
+  const d=document.getElementById('doctrine-ta').value.trim().length>0;
+  document.getElementById('run-meta').textContent=
+    n>0&&d?`${n} actor${n!==1?'s':''} ready · ${candMode==='per-actor'?'doctrine-native candidates':'shared candidates'}`:'select actors · enter doctrine';
+}
+
+// ── RUN ───────────────────────────────────────────────────────────────────────
+async function runPerceptor(){
+  const doctrine=document.getElementById('doctrine-ta').value.trim();
+  const customActor=document.getElementById('custom-actor').value.trim();
+  const actors=[...selActors];
+  if(customActor) actors.push('__custom__');
+
+  if(!doctrine){alert('Enter doctrine or capability text.');return;}
+  if(!actors.length){alert('Select at least one actor.');return;}
+
+  const lb=document.getElementById('lb');
+  const btn=document.getElementById('run-btn');
+  lb.classList.add('on');btn.disabled=true;
+  document.getElementById('results-scroll').innerHTML='';
+  document.getElementById('div-panel').style.display='none';
+  document.getElementById('res-meta').textContent='analyzing...';
+  results={};
+
+  for(const actorId of actors){
+    let prefix,code,name,cands;
+    if(actorId==='__custom__'){
+      prefix=customActor.startsWith('As')?customActor:'As '+customActor+'.';
+      code='CUSTOM';name=customActor;
+      cands=getSharedCands();
+    } else {
+      const a=getActorById(actorId);
+      if(!a)continue;
+      prefix=a.prefix;code=a.code;name=a.name;
+      cands=candMode==='per-actor'?getPerActorCands(actorId):getSharedCands();
+    }
+    if(!cands.length){alert(`No candidates for ${code}`);continue;}
+    const query=`${prefix} ${doctrine}`;
+    try{
+      const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,candidates:cands})});
+      const d=await r.json();
+      const sorted=(d.all||d.top||[]).sort((a,b)=>b.score-a.score);
+      results[actorId]={sorted,code,name,query,cands};
+      renderResult(actorId,results[actorId],Object.keys(results).length-1);
+    }catch(e){console.error(actorId,e);}
+  }
+
+  renderDivergence();
+  lb.classList.remove('on');btn.disabled=false;
+  document.getElementById('res-meta').textContent=actors.length+' actors';
+}
+
+function renderResult(actorId,{sorted,code,name},delay){
+  const scroll=document.getElementById('results-scroll');
+  const mx=sorted[0]?.score||1;
+  const isHi=sorted[0]?.score>0.58;
+  const div=document.createElement('div');
+  div.className='actor-result';
+  div.style.animationDelay=delay*70+'ms';
+  div.innerHTML=`
+    <div class="ar-head">
+      <div class="ar-code">${code}</div>
+      <div class="ar-score ${isHi?'hi':'mid'}">${sorted[0]?.score?.toFixed(4)||'—'}</div>
+    </div>
+    <div class="ar-top">${sorted[0]?.text||'—'}</div>
+    <div class="ar-bars">
+      ${sorted.map((item,i)=>{
+        const pct=Math.max(0,(item.score/mx)*100);
+        return`<div class="arb ${i===0?'top':''}">
+          <div class="arb-t">${item.text}</div>
+          <div class="arb-track"><div class="arb-fill" style="width:${pct}%"></div></div>
+          <div class="arb-v">${item.score.toFixed(3)}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  scroll.appendChild(div);
+}
+
+function renderDivergence(){
+  const keys=Object.keys(results);
+  if(keys.length<2)return;
+  const pairs=[];
+  for(let i=0;i<keys.length;i++){
+    for(let j=i+1;j<keys.length;j++){
+      const a=results[keys[i]],b=results[keys[j]];
+      const sA=a.sorted[0]?.score||0,sB=b.sorted[0]?.score||0;
+      const gap=Math.abs(sA-sB);
+      const agree=a.sorted[0]?.text===b.sorted[0]?.text;
+      pairs.push({cA:a.code,cB:b.code,nA:a.name,nB:b.name,gap,agree,sA,sB});
+    }
+  }
+  pairs.sort((a,b)=>b.gap-a.gap);
+  const maxGap=pairs[0]?.gap||0;
+  const badge=document.getElementById('dp-badge');
+  let level;
+  if(maxGap>0.25||pairs.filter(p=>!p.agree).length>pairs.length*.4){badge.textContent='CRITICAL';badge.className='dp-badge critical';level='critical';}
+  else if(maxGap>0.12){badge.textContent='ELEVATED';badge.className='dp-badge elevated';level='elevated';}
+  else{badge.textContent='STABLE';badge.className='dp-badge stable';level='stable';}
+
+  document.getElementById('dp-rows').innerHTML=pairs.slice(0,6).map(p=>{
+    const gc=p.gap>0.2?'red':p.gap>0.1?'amber':'grn';
+    return`<div class="dp-row">
+      <span class="dp-pair">${p.cA} vs ${p.cB}</span>
+      <span><span class="dp-gap ${gc}">${p.gap.toFixed(4)}</span><span class="dp-stat">${p.agree?'AGREE':'DIVERGE'}</span></span>
+    </div>`;
+  }).join('');
+
+  const top=pairs[0];
+  const note=document.getElementById('dp-note');
+  if(level==='critical'){
+    const div=pairs.find(p=>!p.agree)||top;
+    note.innerHTML=`<span class="risk">MISCALCULATION RISK ELEVATED.</span> ${div.cA} and ${div.cB} read this action from incompatible frameworks (gap ${div.gap.toFixed(4)}, DIVERGE). Actors operating on different assumptions about intent. This divergence is the environment in which unintended escalation occurs. Recommend immediate red team review of action framing.`;
+  } else if(level==='elevated'){
+    note.innerHTML=`MODERATE DIVERGENCE DETECTED. ${top.cA} and ${top.cB} show largest gap (${top.gap.toFixed(4)}). Some actors reading this action differently. Assess whether framing adjustment can reduce misperception risk before commitment.`;
+  } else {
+    note.innerHTML=`<span class="stable">STABLE SIGNAL.</span> Actor set reads this action with broad geometric coherence. Largest gap: ${top.cA} vs ${top.cB} at ${top.gap.toFixed(4)}. Low misperception risk in current configuration. Action is being read consistently across the set.`;
+  }
+  document.getElementById('div-panel').style.display='block';
+  // Also populate VECTOR panel
+  renderVector(results, pairs, level);
+}
+
+
+// RIGHT TAB TOGGLE
+function setRightTab(tab){
+  document.getElementById('panel-perceptor').style.display=tab==='perceptor'?'flex':'none';
+  document.getElementById('panel-vector').style.display=tab==='vector'?'flex':'none';
+  document.getElementById('tab-perceptor').classList.toggle('on',tab==='perceptor');
+  document.getElementById('tab-vector').classList.toggle('on',tab==='vector');
+}
+
+// VECTOR RENDERER
+function renderVector(results, pairs, level){
+  const scroll=document.getElementById('vec-scroll');
+  if(!scroll) return;
+  scroll.innerHTML='';
+  const keys=Object.keys(results);
+  if(!keys.length) return;
+
+  const adversaryCodes=['PLA-STC','PLA-SSF','PLA-RF','GSh','GRU','SVR','FSB','IRGC','IRGC-QF','MOIS','RGB','KPA-SC','HEZB','HAMAS-MQ','AAS'];
+  const allyCodes=['MND-TW','AMAN','DI-ROK','SIS'];
+  const ownCodes=['INDOPACOM','DIA','CIA-NCS','NSA','STRATCOM','CYBERCOM'];
+
+  keys.forEach((actorId,i)=>{
+    const r=results[actorId];
+    const top=r.sorted[0];
+    const second=r.sorted[1];
+    const isAdversary=adversaryCodes.includes(r.code);
+    const isAlly=allyCodes.includes(r.code);
+    const gap=second?(top.score-second.score):0;
+    const confidence=gap>0.08?'HIGH':gap>0.04?'MODERATE':'LOW';
+    const miscalcRisk=gap<0.04?'ELEVATED':gap<0.08?'MODERATE':'LOW';
+    const groupTag=isAdversary?'ADVERSARY':isAlly?'ALLY':ownCodes.includes(r.code)?'OWN FORCES':'ACTOR';
+
+    const div=document.createElement('div');
+    div.className='vs-section';
+    div.style.animationDelay=i*60+'ms';
+    div.innerHTML=
+      '<div class="vs-actor-head">'+
+        '<span class="vah-code">'+r.code+' <span style="font-size:7px;color:var(--dim);letter-spacing:.06em">'+groupTag+'</span></span>'+
+        '<span class="vah-interp">'+(top?top.text:'—')+'</span>'+
+      '</div>'+
+      '<div class="vs-block">'+
+        '<div class="vsb-lbl">Most probable interpretation</div>'+
+        '<div class="vs-most-prob">'+(top?top.text:'—')+'</div>'+
+        (second?'<div class="vs-also">Secondary read: '+second.text+' ('+second.score.toFixed(3)+')</div>':'')+
+      '</div>'+
+      '<div class="vs-risk">'+
+        '<div class="vsr-lbl">Confidence</div>'+
+        '<div class="vsr-val '+(confidence==='HIGH'?'low':confidence==='MODERATE'?'mod':'high')+'">'+confidence+'</div>'+
+        '<div style="flex:1"></div>'+
+        '<div class="vsr-lbl">Miscalc risk</div>'+
+        '<div class="vsr-val '+(miscalcRisk==='LOW'?'low':miscalcRisk==='MODERATE'?'mod':'high')+'">'+miscalcRisk+'</div>'+
+      '</div>';
+    scroll.appendChild(div);
+  });
+
+  // DECISION BRIEF
+  const brief=document.createElement('div');
+  brief.className='vec-brief';
+
+  const advResults=keys.filter(k=>adversaryCodes.includes(results[k].code));
+  const advTexts=advResults.map(k=>results[k].sorted[0]&&results[k].sorted[0].text).filter(Boolean);
+  const advUnique=[...new Set(advTexts)];
+  const advConsensus=advUnique.length<=1;
+
+  const allyResults=keys.filter(k=>allyCodes.includes(results[k].code));
+  const allyTexts=allyResults.map(k=>results[k].sorted[0]&&results[k].sorted[0].text).filter(Boolean);
+
+  const divergePairs=pairs.filter(p=>!p.agree).slice(0,2);
+  const maxGapPair=pairs[0];
+
+  let wrongStr='';
+  if(level==='critical'&&divergePairs.length){
+    wrongStr='<span class="risk">'+divergePairs[0].cA+' and '+divergePairs[0].cB+' reading this action from incompatible frameworks. If '+divergePairs[0].cA+' acts on their interpretation while '+divergePairs[0].cB+' acts on theirs, responses will be uncoordinated. Miscalculation window is open.</span>';
+  } else if(level==='elevated'&&maxGapPair){
+    wrongStr=maxGapPair.cA+' and '+maxGapPair.cB+' show largest divergence ('+maxGapPair.gap.toFixed(4)+'). Monitor for response asymmetry before committing to next action.';
+  } else {
+    wrongStr='<span class="stable">Actor set reads this action coherently. Low miscalculation risk. Proceed with standard monitoring.</span>';
+  }
+
+  const levelBadgeClass=level==='critical'?'critical':level==='elevated'?'elevated':'stable';
+
+  brief.innerHTML=
+    '<div class="vb-head">DECISION BRIEF <span class="dp-badge '+levelBadgeClass+'">'+level.toUpperCase()+'</span></div>'+
+    (advResults.length?
+      '<div class="vb-q1">'+
+        '<div class="vb-lbl">What adversaries will do</div>'+
+        '<div class="vb-ans '+(advConsensus?'stable':'')+'">'+
+          (advConsensus&&advUnique[0]?advUnique[0]:advUnique.length?'Divergent readings: '+advUnique.join(' / '):'Insufficient data')+
+        '</div>'+
+      '</div>':'')+
+    (allyResults.length?
+      '<div class="vb-q1">'+
+        '<div class="vb-lbl">What allies will do</div>'+
+        '<div class="vb-ans stable">'+([...new Set(allyTexts)].join(' / ')||'Insufficient data')+'</div>'+
+      '</div>':'')+
+    '<div class="vb-q1">'+
+      '<div class="vb-lbl">What could go wrong</div>'+
+      '<div class="vb-ans">'+wrongStr+'</div>'+
+    '</div>';
+  scroll.appendChild(brief);
+}
+
+// CLOCK
+setInterval(()=>document.getElementById('hd-time').textContent=new Date().toISOString().slice(0,19).replace('T',' ')+'Z',1000);
+
+buildActors();
+buildTabs();
+loadScenario(0,document.querySelector('.ss-tab'));
+</script>
+</body>
+</html>
